@@ -229,7 +229,7 @@ class CalculateGpm():
             csvfile = open( filepath, mode='w')
             writer = csv.writer( csvfile, delimiter=';' )
             if head: writer.writerow( head )
-            return { 'csvfile': csvfile, 'writerow': writer.writerow }
+            return { 'csvfile': csvfile, 'writerows': writer.writerows }
 
         def getTotalPrecipitation(data):
             """
@@ -317,16 +317,22 @@ class CalculateGpm():
         msg = f"{totalDays} Days | {self.images_day} Images/Day | {len( self.stations )} Stations"
         print( msg )
         c_days = 0
-        for d in range( totalDays ):
-            dt = ( self.dateIni + timedelta(days=d) )
-            c_days += 1
-            labelDate = dt.strftime('%Y-%m-%d')
-            data = { 'datetime': dt, 'labelDate': f"{labelDate} ({c_days}/{totalDays})" }
-            r  = getTotalPrecipitation( data )
-            if r['errors']:
-                totalError += len( r['errors'] )
-                for msg in r['errors']: fwError['writerow']( [ msg ] )
-            for k, v in r['stations_total'].items(): fwOut['writerow']( [ k, labelDate, v / self.factor_mm_day] )
+        try:
+            for d in range( totalDays ):
+                dt = ( self.dateIni + timedelta(days=d) )
+                c_days += 1
+                labelDate = dt.strftime('%Y-%m-%d')
+                data = { 'datetime': dt, 'labelDate': f"{labelDate} ({c_days}/{totalDays})" }
+                r  = getTotalPrecipitation( data )
+                if r['errors']:
+                    totalError += len( r['errors'] )
+                    fwError['writerows']( r['errors'] )
+                    fwError['csvfile'].flush()
+                items = ( [ k, labelDate, v ] for k, v in r['stations_total'].items() )
+                fwOut['writerows']( items )
+                fwOut['csvfile'].flush()
+        except Exception as e:
+            print(f"\nError processing: {str(e)}\n")
         fwOut['csvfile'].close()
         fwError['csvfile'].close()
         msg = f"Saved '{filePathOut}'."
