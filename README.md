@@ -1,2 +1,3 @@
-# nasa_gpm
-Scripts for get precipitation from arthurhou.pps.eosdis.nasa.gov
+# Scripts for work with [Global Precipitation Measurement (GPM)](https://pps.gsfc.nasa.gov/)
+
+## 
