@@ -40,7 +40,7 @@ from osgeo.gdalconst import GA_ReadOnly
 
 gdal.UseExceptions()
 
-class GetValuePixel():
+class DatasetValuePixel():
     FMTTYPES = {
         'Byte':'B',
         'UInt16':'H',
@@ -274,7 +274,7 @@ class CalculateGpm():
                 Args:
                     data: { 'labelDate', 'dataset' }
                 """
-                gvp = GetValuePixel( ds )
+                gvp = DatasetValuePixel( ds )
                 gvp.setBand(1)
                 station_precipitation = [] # ( id, value)
                 for station in self.stations:
