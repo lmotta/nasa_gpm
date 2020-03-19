@@ -326,7 +326,8 @@ class CalculateGpm():
                 r  = getTotalPrecipitation( data )
                 if r['errors']:
                     totalError += len( r['errors'] )
-                    fwError['writerows']( r['errors'] )
+                    items = ( [ message ] for message in ['erros'] )
+                    fwError['writerows']( items )
                     fwError['csvfile'].flush()
                 items = ( [ k, labelDate, v ] for k, v in r['stations_total'].items() )
                 fwOut['writerows']( items )
