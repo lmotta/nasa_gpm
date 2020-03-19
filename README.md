@@ -3,7 +3,7 @@
 ### Daily precipitation GPM (daily_precipitation_gpm.py): 
 - Dependencies:
   - Python 3
-  - gdal(3.0) osgeo package
+  - gdal(>= 2.4) osgeo package
 - Create a CSV file with values of daily precipitation from FTP (arthurhou.pps.eosdis.nasa.gov)
   - CSV Fields:  ID station | date | total_mm(APD)
   - APD (Accumulation Precipitation of Day): Previous day(12:00 to 23:59) + Current day(00:00 to 11:59)
