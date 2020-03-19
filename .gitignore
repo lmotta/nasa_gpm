@@ -1,4 +1,5 @@
 # Ignore
+.vscode
 .directory
 __pycache_
 *.pyc
