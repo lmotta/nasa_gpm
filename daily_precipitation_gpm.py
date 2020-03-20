@@ -288,18 +288,18 @@ class CalculateGpm():
             data: { 'datetime', 'labelDate' }
             return: { 'stations_total', 'erros' }
             """
-            def getDatasetImages():
+            def getDatasetSources():
                 c_images = 0
-                dsImages, errors = [], []
+                sources, errors = [], []
                 for vd in GpmDataset.getValuesDatatime( data['datetime'] ):
                     c_images += 1
                     name = GpmDataset.getNameImage( vd )
-                    msg = f"{data['labelDate']} - Fetching {name}({c_images}/{GpmDataset.IMAGES_DAY})..."
+                    msg = f"{data['labelDate']} - Fetching {name} ({c_images}/{GpmDataset.IMAGES_DAY})..."
                     printStatus( msg )
                     r = self.gpmDS.getDataSet( vd )
-                    dsImages.append( r['dataset'] ) if r['isOk'] else errors.append( r['message'] )
+                    sources.append( r['dataset'].GetDescription() ) if r['isOk'] else errors.append( r['message'] )
 
-                return { 'dsImages': dsImages, 'errors': errors }
+                return { 'sources': sources, 'errors': errors }
 
             def getStationsPrecipitations(source):
                 """
@@ -317,11 +317,8 @@ class CalculateGpm():
 
                 return station_precipitation
             
-            r = getDatasetImages()
-            sources = []
-            for ds in r['dsImages']:
-                sources.append( ds.GetDescription() )
-                ds = None
+            r = getDatasetSources()
+            sources = r['sources']
             errors = r['errors']
 
             msg = f"{data['labelDate']} - Precipitations calculating..."
@@ -432,4 +429,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit( main() )
-
