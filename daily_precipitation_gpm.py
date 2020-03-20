@@ -71,8 +71,66 @@ class DatasetValuePixel():
 
 class GpmDataset():
     HOST = 'arthurhou.pps.eosdis.nasa.gov'
+    TYPE_IMAGE = '3B-HHR-GIS.MS.MRG.3IMERG'
     VERSION = 6
+    CONFIG_TIME = {
+        'iniHourBefore': 12,
+        'deltaStep': timedelta(minutes=30),
+        'deltaSecond': timedelta(seconds=1)
+    }
+    IMAGES_DAY = 48 # Day(24h) = 48 * 1/2 hour
     VSICURL = False
+    @staticmethod
+    def getValuesDatatime(v_datetime):
+        """
+        Args:
+            v_datetime: datetime
+        Return: Generator of dictionary of valueDatetime(see getNameImage)
+                Previuos day(12:00 to 23:59) and Current day(00:00 to 11:59)
+        """
+        previosDay = v_datetime - timedelta(days=1)
+        args = ( previosDay.year, previosDay.month, previosDay.day, GpmDataset.CONFIG_TIME['iniHourBefore'] )
+        s_dt = datetime( *args )
+        for _i in range( GpmDataset.IMAGES_DAY ):
+            e_dt = s_dt + GpmDataset.CONFIG_TIME['deltaStep'] - GpmDataset.CONFIG_TIME['deltaSecond']
+            v = {
+                'year': s_dt.year,
+                'month': s_dt.month,
+                'day': s_dt.day,
+                's_hour': s_dt.hour,
+                's_minute': s_dt.minute,
+                's_second': s_dt.second,
+                'e_hour': e_dt.hour,
+                'e_minute': e_dt.minute,
+                'e_second': e_dt.second,
+                'totalmin': s_dt.hour * 60  + s_dt.minute
+            }
+            s_dt += GpmDataset.CONFIG_TIME['deltaStep']
+            yield v
+
+    @staticmethod
+    def getNameImage(valueDatetime):
+        """
+        Args:
+            valueDatetime:
+                {
+                    'year', 'month', 'day',
+                    's_hour', 's_minute', 's_second',
+                    'e_hour', 'e_minute', 'e_second',
+                    'totalmin'
+                }
+        """
+        f_image = {
+            'type': GpmDataset.TYPE_IMAGE,
+            'day': '{year:04}{month:02}{day:02}',
+            'start': 'S{s_hour:02}{s_minute:02}{s_second:02}',
+            'end': 'E{e_hour:02}{e_minute:02}{e_second:02}',
+            'totalmin': '{totalmin:04}',
+            'version': f"V{GpmDataset.VERSION:02}B"
+        }
+        f_name = "{type}.{day}-{start}-{end}.{totalmin}.{version}".format( **f_image )
+        return f_name.format( **valueDatetime )
+
     def __init__(self, email, dirname):
         """
         Example image: 3B-HHR-GIS.MS.MRG.3IMERG.20170227-S013000-E015959.0090.V06B.tif
@@ -87,7 +145,7 @@ class GpmDataset():
         f_image = {
             'root': f"ftp://{user}:{user}@{self.HOST}/gpmdata",
             'dir': '{year:04}/{month:02}/{day:02}/gis',
-            'type': '3B-HHR-GIS.MS.MRG.3IMERG',
+            'type': self.TYPE_IMAGE,
             'day': '{year:04}{month:02}{day:02}',
             'start': 'S{s_hour:02}{s_minute:02}{s_second:02}',
             'end': 'E{e_hour:02}{e_minute:02}{e_second:02}',
@@ -164,12 +222,6 @@ class CalculateGpm():
         self.gpmDS = GpmDataset( email,  os.path.dirname( filePathCsv ) )
         self.dateIni, self.dateEnd = dateIni, dateEnd
         self.filePathCsv = filePathCsv
-        self.configTime = {
-            'iniHourBefore': 12,
-            'deltaStep': timedelta(minutes=30),
-            'deltaSecond': timedelta(seconds=1)
-        }
-        self.images_day = 48 # Day = 48 * 1/2 hour
         self.factor_mm_day = 20
         self.stations = [] # { 'id', 'lat', 'long' }
 
@@ -237,72 +289,53 @@ class CalculateGpm():
             return: { 'stations_total', 'erros' }
             """
             def getDatasetImages():
-                def getValuesDay(dt):
-                    previosDay = dt - timedelta(days=1)
-                    args = ( previosDay.year, previosDay.month, previosDay.day, self.configTime['iniHourBefore'] )
-                    s_dt = datetime( *args )
-                    for _i in range( self.images_day ):
-                        e_dt = s_dt + self.configTime['deltaStep'] - self.configTime['deltaSecond']
-                        v = {
-                            'year': s_dt.year,
-                            'month': s_dt.month,
-                            'day': s_dt.day,
-                            's_hour': s_dt.hour,
-                            's_minute': s_dt.minute,
-                            's_second': s_dt.second,
-                            'e_hour': e_dt.hour,
-                            'e_minute': e_dt.minute,
-                            'e_second': e_dt.second,
-                            'totalmin': s_dt.hour * 60  + s_dt.minute
-                        }
-                        s_dt += self.configTime['deltaStep']
-                        yield v
-
                 c_images = 0
                 dsImages, errors = [], []
-                for vd in getValuesDay( data['datetime'] ):
+                for vd in GpmDataset.getValuesDatatime( data['datetime'] ):
                     c_images += 1
-                    msg = f"{data['labelDate']} - Fetching image({c_images}/{self.images_day})..."
+                    name = GpmDataset.getNameImage( vd )
+                    msg = f"{data['labelDate']} - Fetching {name}({c_images}/{GpmDataset.IMAGES_DAY})..."
                     printStatus( msg )
-                    r = self.gpmDS.getDataSet(vd)
+                    r = self.gpmDS.getDataSet( vd )
                     dsImages.append( r['dataset'] ) if r['isOk'] else errors.append( r['message'] )
 
                 return { 'dsImages': dsImages, 'errors': errors }
 
-            def getStationsPrecipitations(ds):
+            def getStationsPrecipitations(source):
                 """
                 Args:
-                    data: { 'labelDate', 'dataset' }
+                    source: Source of Dataset
                 """
-                gvp = DatasetValuePixel( ds )
-                gvp.setBand(1)
+                ds = gdal.Open( source, GA_ReadOnly )
+                dvp = DatasetValuePixel( ds )
+                dvp.setBand(1)
                 station_precipitation = [] # ( id, value)
                 for station in self.stations:
-                    item = ( station['id'], gvp.getValue( station['long'], station['lat'] ) )
+                    item = ( station['id'], dvp.getValue( station['long'], station['lat'] ) )
                     station_precipitation.append( item )
+                ds = None
 
                 return station_precipitation
             
-            msg = f"{data['labelDate']} - Fetching {self.images_day} images..."
-            printStatus( msg )
             r = getDatasetImages()
-            dsImages = r['dsImages']
+            sources = []
+            for ds in r['dsImages']:
+                sources.append( ds.GetDescription() )
+                ds = None
             errors = r['errors']
 
             msg = f"{data['labelDate']} - Precipitations calculating..."
             printStatus( msg )
             pool, threads = ThreadPool(processes=4), []
-            for ds in dsImages:
-                async_result = pool.map_async( getStationsPrecipitations, (ds,) )
+            for src in sources:
+                async_result = pool.map_async( getStationsPrecipitations, (src,) )
                 threads.append( async_result )
             stations_total = { v['id']: 0 for v in self.stations }
             for result in threads:
                 for id_station, vPixel in result.get()[0]: stations_total[ id_station ] += vPixel
             threads.clear()
-            for ds in dsImages:
-                os.remove( ds.GetDescription() )
-                ds = None
-            dsImages.clear()
+            for src in sources: os.remove( src )
+            sources.clear()
             return { 'stations_total': stations_total, 'errors': errors }
 
         filePathOut = f"{os.path.splitext( self.filePathCsv )[0]}_gpm.csv"
@@ -314,7 +347,7 @@ class CalculateGpm():
         
         delta = self.dateEnd - self.dateIni
         totalDays = delta.days + 1
-        msg = f"{totalDays} Days | {self.images_day} Images/Day | {len( self.stations )} Stations"
+        msg = f"{totalDays} Days | {GpmDataset.IMAGES_DAY} Images/Day | {len( self.stations )} Stations"
         print( msg )
         c_days = 0
         try:
