@@ -356,10 +356,10 @@ class CalculateGpm():
                 r  = getTotalPrecipitation( data )
                 if r['errors']:
                     totalError += len( r['errors'] )
-                    items = ( [ message ] for message in ['erros'] )
+                    items = ( [ message ] for message in r['erros'] )
                     fwError['writerows']( items )
                     fwError['csvfile'].flush()
-                items = ( [ k, labelDate, v ] for k, v in r['stations_total'].items() )
+                items = ( [ k, labelDate, v/self.factor_mm_day ] for k, v in r['stations_total'].items() )
                 fwOut['writerows']( items )
                 fwOut['csvfile'].flush()
         except Exception as e:

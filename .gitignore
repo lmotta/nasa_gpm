@@ -3,3 +3,4 @@
 .directory
 __pycache_
 *.pyc
+*.csv
