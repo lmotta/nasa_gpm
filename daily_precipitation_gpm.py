@@ -260,6 +260,12 @@ class CalculateGpm():
             return r
         self.dateEnd = r['date']
 
+        if self.dateIni > self.dateEnd:
+            lblIni = self.dateIni.strftime('%Y-%m-%d')
+            lblEnd = self.dateEnd.strftime('%Y-%m-%d')
+            msg = f"ini_date({lblIni}) > end_date({lblEnd})"
+            return { 'isOk': False, 'message': msg }
+
         r = self.gpmDS.isLive( self.dateIni )
         if not r['isOk']:
             return r
