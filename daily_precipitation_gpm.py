@@ -155,7 +155,7 @@ class GpmDataset():
         self.ftp_image = "{root}/{dir}/{type}.{day}-{start}-{end}.{totalmin}.{version}.tif".format( **f_image )
         self.dirname = dirname
         self.getDS = self._getDS_Vsicurl if self.VSICURL else self._getDS_Download
-
+        
     def isLive(self, v_datetime):
         """
         Args:
@@ -271,7 +271,7 @@ class CalculateGpm():
 
         return { 'isOk': True }
 
-    def save(self):
+    def saveCsv(self, download_keep):
         def printStatus(message):
             msg = f"\r{message.ljust(100)}"
             sys.stdout.write( msg )
@@ -331,7 +331,8 @@ class CalculateGpm():
             for result in threads:
                 for id_station, vPixel in result.get()[0]: stations_total[ id_station ] += vPixel
             threads.clear()
-            for src in sources: os.remove( src )
+            if download_keep:
+                for src in sources: os.remove( src )
             sources.clear()
             return { 'stations_total': stations_total, 'errors': errors }
 
@@ -399,7 +400,7 @@ class EmailType(object):
         return value
 
 
-def run(email, ini_date, end_date, filepath_csv):
+def run(email, ini_date, end_date, filepath_csv, download_keep):
     def messageDiffDateTime(dt1, dt2):
         diff = dt2 - dt1
         return "Days = {} hours = {}".format( diff.days, diff.seconds / 3600 )
@@ -411,7 +412,7 @@ def run(email, ini_date, end_date, filepath_csv):
         return 0
     dtIni = datetime.now()
     print('Started ', dtIni)
-    cg.save()
+    cg.saveCsv( download_keep )
     dtEnd = datetime.now()
     msgDiff = messageDiffDateTime( dtIni, dtEnd )
     print('Finished ', f"{dtEnd}({msgDiff})")
@@ -423,9 +424,10 @@ def main():
     parser.add_argument( 'ini_date', action='store', help='Initial date (YYYY-mm-DD)', type=str)
     parser.add_argument( 'end_date', action='store', help='End date (YYYY-mm-DD)', type=str)
     parser.add_argument( 'filepath_csv', action='store', help='Filepath of CSV with coordinates of stations', type=str)
+    parser.add_argument( '-d', '--download_keep', action="store_false", help='Keep downloads')
 
     args = parser.parse_args()
-    return run( args.email, args.ini_date, args.end_date, args.filepath_csv )
+    return run( args.email, args.ini_date, args.end_date, args.filepath_csv, args.download_keep )
 
 if __name__ == "__main__":
     sys.exit( main() )
