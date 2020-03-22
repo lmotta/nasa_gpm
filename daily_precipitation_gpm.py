@@ -286,7 +286,7 @@ class CalculateGpm():
         def getTotalPrecipitation(data):
             """
             data: { 'datetime', 'labelDate' }
-            return: { 'stations_total', 'erros' }
+            return: { 'stations_total', 'errors' }
             """
             def getDatasetSources():
                 c_images = 0
@@ -356,7 +356,7 @@ class CalculateGpm():
                 r  = getTotalPrecipitation( data )
                 if r['errors']:
                     totalError += len( r['errors'] )
-                    items = ( [ message ] for message in r['erros'] )
+                    items = ( [ message ] for message in r['errors'] )
                     fwError['writerows']( items )
                     fwError['csvfile'].flush()
                 items = ( [ k, labelDate, v/self.factor_mm_day ] for k, v in r['stations_total'].items() )
@@ -414,7 +414,7 @@ def run(email, ini_date, end_date, filepath_csv):
     cg.save()
     dtEnd = datetime.now()
     msgDiff = messageDiffDateTime( dtIni, dtEnd )
-    print('\nFinished ', f"{dtEnd}({msgDiff})")
+    print('Finished ', f"{dtEnd}({msgDiff})")
     return 0
 
 def main():
