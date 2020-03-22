@@ -4,3 +4,6 @@
 __pycache_
 *.pyc
 *.csv
+*.tif
+# Not Ignore
+!station_cerrado.csv
