@@ -374,7 +374,7 @@ class CalculateGpm():
         if not totalError:
             os.remove( filePathError )
         else:
-            msg = f"\nErrors read images ({totalError} images): '{filePathError}'"
+            msg = f"\nErrors read images ({totalError} images): '{filePathError}'\r"
             print( msg )
 
 
@@ -417,7 +417,7 @@ def run(email, ini_date, end_date, filepath_csv, download_keep):
     cg.saveCsv( download_keep )
     dtEnd = datetime.now()
     msgDiff = messageDiffDateTime( dtIni, dtEnd )
-    print('Finished ', f"{dtEnd}({msgDiff})")
+    print('\nFinished ', f"{dtEnd}({msgDiff})")
     return 0
 
 def main():

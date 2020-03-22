@@ -17,7 +17,8 @@
     ID;LAT;LONG  
     A354;-6.974135;-42.146831  
     A364;-9.875196;-45.345805  
-    ...  
+    ...
+  - download_keep(-d) - OPTIONAL: Keep download images
 - Process:
   - Download of images to one day(48 images)
     - Hours of previous day: 12:00 to 23:59 (24 images)
@@ -35,6 +36,8 @@
     ...  
   - Use:  
   ```
-  python daily_precipitation_gpm.py test@gmail.com 2019-02-02 2019-02-05 station_cerrado.csv
+  python3 daily_precipitation_gpm.py -h
+  python3 daily_precipitation_gpm.py test@gmail.com 2019-02-02 2019-02-05 station_cerrado.csv
+  python3 daily_precipitation_gpm.py test@gmail.com 2019-02-02 2019-02-05 station_cerrado.csv -d
   ```
   
