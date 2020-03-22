@@ -336,10 +336,12 @@ class CalculateGpm():
             sources.clear()
             return { 'stations_total': stations_total, 'errors': errors }
 
-        filePathOut = f"{os.path.splitext( self.filePathCsv )[0]}_gpm.csv"
+        suffix = f"{self.dateIni.strftime('%Y-%m-%d')}_{self.dateEnd.strftime('%Y-%m-%d')}"
+        name = f"{os.path.splitext( self.filePathCsv )[0]}_gpm_{suffix}"
+        filePathOut = f"{name}.csv"
         fwOut = createWriteFile( filePathOut, ['id', 'date', 'total_mm'] )
 
-        filePathError = f"{os.path.splitext( self.filePathCsv )[0]}_gpm_error.csv"
+        filePathError = f"{name}_error.csv"
         fwError = createWriteFile( filePathError )
         totalError = 0
         
