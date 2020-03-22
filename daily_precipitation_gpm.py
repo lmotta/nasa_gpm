@@ -348,7 +348,7 @@ class CalculateGpm():
         fwOut = createWriteFile( filePathOut, ['id', 'date', 'total_mm'] )
 
         filePathError = f"{name}_error.csv"
-        fwError = createWriteFile( filePathError )
+        fwError = createWriteFile( filePathError, ['date', 'message'] )
         totalError = 0
         
         delta = self.dateEnd - self.dateIni
@@ -365,7 +365,7 @@ class CalculateGpm():
                 r  = getTotalPrecipitation( data )
                 if r['errors']:
                     totalError += len( r['errors'] )
-                    items = ( [ message ] for message in r['errors'] )
+                    items = ( [ labelDate, error ] for error in r['errors'] )
                     fwError['writerows']( items )
                     fwError['csvfile'].flush()
                 items = ( [ k, labelDate, v/self.factor_mm_day ] for k, v in r['stations_total'].items() )
@@ -418,6 +418,7 @@ def run(email, ini_date, end_date, filepath_csv, download_keep):
     if not r['isOk']:
         print( r['message'])
         return 0
+
     dtIni = datetime.now()
     print('Started ', dtIni)
     cg.saveCsv( download_keep )
