@@ -337,7 +337,7 @@ class CalculateGpm():
             for result in threads:
                 for id_station, vPixel in result.get()[0]: stations_total[ id_station ] += vPixel
             threads.clear()
-            if download_keep:
+            if not download_keep:
                 for src in sources: os.remove( src )
             sources.clear()
             return { 'stations_total': stations_total, 'errors': errors }
@@ -432,7 +432,7 @@ def main():
     parser.add_argument( 'ini_date', action='store', help='Initial date (YYYY-mm-DD)', type=str)
     parser.add_argument( 'end_date', action='store', help='End date (YYYY-mm-DD)', type=str)
     parser.add_argument( 'filepath_csv', action='store', help='Filepath of CSV with coordinates of stations', type=str)
-    parser.add_argument( '-d', '--download_keep', action="store_false", help='Keep downloads')
+    parser.add_argument( '-d', '--download_keep', action="store_true", help='Keep downloads')
 
     args = parser.parse_args()
     return run( args.email, args.ini_date, args.end_date, args.filepath_csv, args.download_keep )
