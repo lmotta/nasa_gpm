@@ -32,7 +32,6 @@ import sys, os, csv
 from datetime import datetime, timedelta
 import urllib.request, urllib.error
 import argparse, re, struct
-import multiprocessing
 from multiprocessing.pool import ThreadPool
 
 from osgeo import gdal
@@ -329,14 +328,11 @@ class CalculateGpm():
 
             msg = f"{data['labelDate']} - Precipitations calculating..."
             printStatus( msg )
-            pool, threads = ThreadPool(processes=4), []
-            for src in sources:
-                async_result = pool.map_async( getStationsPrecipitations, (src,) )
-                threads.append( async_result )
-            stations_total = { v['id']: 0 for v in self.stations }
-            for result in threads:
-                for id_station, vPixel in result.get()[0]: stations_total[ id_station ] += vPixel
-            threads.clear()
+            pool = ThreadPool(processes=4)
+            mapResult = pool.map_async( getStationsPrecipitations, sources )
+            stations_total = { k['id']: 0 for k in self.stations }
+            for results in mapResult.get():
+                for k,v in results: stations_total[ k ] += v
             if not download_keep:
                 for src in sources: os.remove( src )
             sources.clear()
