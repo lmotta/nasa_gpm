@@ -333,6 +333,7 @@ class CalculateGpm():
             stations_total = { k['id']: 0 for k in self.stations }
             for results in mapResult.get():
                 for k,v in results: stations_total[ k ] += v
+            pool.close()
             if not download_keep:
                 for src in sources: os.remove( src )
             sources.clear()
